@@ -4,9 +4,6 @@ from huggingface_hub import InferenceClient
 
 app = Flask(__name__)
 
-# Đặt API URL của Hugging Face (ví dụ sử dụng GPT-3.5 hoặc GPT-4 model)
-API_URL = "https://huggingface.co/blaze999/Medical-NER"  # Mô hình Hugging Face
-
 # Lấy API token từ Hugging Face
 API_TOKEN = "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"
 
