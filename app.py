@@ -1,13 +1,19 @@
-from flask import Flask, request, jsonify
 import requests
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
-# Địa chỉ API của LM Studio (giả sử nó là một API RESTful)
-LM_API_URL = "http://127.0.0.1:1234/v1/chat/completions"  # Địa chỉ API thực tế từ LM Studio
+# Đặt API URL của Hugging Face (ví dụ sử dụng GPT-3.5 hoặc GPT-4 model)
+API_URL = "https://huggingface.co/blaze999/Medical-NER"
 
-# Thông tin xác thực API (nếu có)
-#API_KEY = "your_api_key"  # API key bạn nhận được từ LM Studio
+# Lấy API token từ Hugging Face
+API_TOKEN = "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"
+
+# Đặt header cho yêu cầu
+headers = {
+    "Authorization": f"Bearer {API_TOKEN}",
+    "Content-Type": "application/json"
+}
 
 @app.route('/v1/chat/completions', methods=['POST'])
 def chat_completions():
@@ -24,41 +30,37 @@ def chat_completions():
             elif message['role'] == 'user':
                 user_prompt = message.get('content', '')
         
-        # Gửi yêu cầu đến API của LM Studio
-        headers = {
-            #'Authorization': f'Bearer {API_KEY}',  # Nếu cần API Key
-            'Content-Type': 'application/json'
-        }
-
+        # Tạo payload gửi đến Hugging Face
         payload = {
-            'model': 'medical_llm',  # Tên model bạn đã tải về
-            'messages': [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ]
+            "inputs": user_prompt,  # Đầu vào là thông điệp của người dùng
+            "parameters": {
+                "max_length": 200,  # Tùy chỉnh theo yêu cầu
+                "temperature": 0.7
+            }
         }
-
-        # Gửi yêu cầu POST đến LM Studio API
-        response = requests.post(LM_API_URL, json=payload, headers=headers)
+        
+        # Gửi yêu cầu đến Hugging Face API
+        response = requests.post(API_URL, headers=headers, json=payload)
         
         if response.status_code == 200:
-            response_data = response.json()
-            model_response = response_data['choices'][0]['message']['content']
+            model_response = response.json()
+            assistant_reply = model_response[0]['generated_text']  # Điều chỉnh theo cấu trúc trả về của Hugging Face model
             return jsonify({
                 'choices': [
                     {
                         'message': {
                             'role': 'assistant',
-                            'content': model_response
+                            'content': assistant_reply
                         }
                     }
                 ]
             })
         else:
-            return jsonify({"error": "Failed to get response from LM Studio API"}), 500
+            return jsonify({"error": "Error from Hugging Face API", "details": response.text}), 500
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
+
