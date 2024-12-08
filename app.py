@@ -8,7 +8,7 @@ app = Flask(__name__)
 API_TOKEN = "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"
 
 # Tạo InferenceClient
-client = InferenceClient(repo_id="blaze999/Medical-NER", token=API_TOKEN)
+client = InferenceClient(model="blaze999/Medical-NER", token=API_TOKEN)
 
 @app.route('/v1/chat/completions', methods=['POST'])
 def chat_completions():
